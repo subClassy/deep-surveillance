@@ -1,0 +1,6 @@
+*.ipynb
+*.jpg
+**/faces/*
+*.xml
+**/fer2013/*
+**/__pycache__/*
