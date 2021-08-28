@@ -4,3 +4,5 @@
 *.xml
 **/fer2013/*
 **/__pycache__/*
+*.h5
+**/age-gender-estimation/*
