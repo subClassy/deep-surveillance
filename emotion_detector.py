@@ -1,14 +1,15 @@
+from keras import regularizers
 from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint,
                                         ReduceLROnPlateau)
 from tensorflow.keras.layers import (Activation, BatchNormalization, Conv2D,
-                                     Dense, Dropout, Flatten, MaxPooling2D)
+                                     Dense, Dropout, Flatten, MaxPool2D)
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 num_classes = 6
 img_rows, img_cols = 48, 48
-batch_size = 16
+batch_size = 64
 
 train_data_dir = './fer2013/train'
 validation_data_dir = './fer2013/validation'
@@ -43,75 +44,45 @@ validation_generator = validation_datagen.flow_from_directory(
 
 model = Sequential()
 
-model.add(Conv2D(64, (3, 3), padding = 'same', kernel_initializer="he_normal", 
-                 input_shape = (img_rows, img_cols, 1)))
-model.add(Activation('elu'))
+model.add(Conv2D(32, kernel_size=(3, 3), padding='same', activation='relu', 
+                 input_shape=(img_rows, img_cols, 1)))
+model.add(Conv2D(64, (3, 3), padding='same', activation='relu' ))
 model.add(BatchNormalization())
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
 
-model.add(Conv2D(64, (3, 3), padding = "same", kernel_initializer="he_normal"))
-model.add(Activation('elu'))
+model.add(Conv2D(128, (5, 5), padding='same', activation='relu'))
 model.add(BatchNormalization())
-
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.2))
-
-model.add(Conv2D(128, (3, 3), padding = 'same', kernel_initializer="he_normal"))
-model.add(Activation('elu'))
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+    
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu', 
+                 kernel_regularizer=regularizers.l2(0.01)))
 model.add(BatchNormalization())
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
 
-model.add(Conv2D(128, (3, 3), padding = "same", kernel_initializer="he_normal"))
-model.add(Activation('elu'))
+model.add(Conv2D(512,(3,3), padding='same', activation='relu', 
+                 kernel_regularizer=regularizers.l2(0.01)))
 model.add(BatchNormalization())
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
 
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.2))
-
-model.add(Conv2D(256, (3, 3), padding = 'same', kernel_initializer="he_normal"))
-model.add(Activation('elu'))
+model.add(Flatten()) 
+model.add(Dense(256,activation = 'relu'))
 model.add(BatchNormalization())
-
-model.add(Conv2D(256, (3, 3), padding = "same", kernel_initializer="he_normal"))
-model.add(Activation('elu'))
+model.add(Dropout(0.25))
+    
+model.add(Dense(512,activation = 'relu'))
 model.add(BatchNormalization())
+model.add(Dropout(0.25))
 
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.2))
+model.add(Dense(num_classes, activation='softmax'))
 
-model.add(Conv2D(512, (3, 3), padding = 'same', kernel_initializer="he_normal"))
-model.add(Activation('elu'))
-model.add(BatchNormalization())
-
-model.add(Conv2D(512, (3, 3), padding = "same", kernel_initializer="he_normal"))
-model.add(Activation('elu'))
-model.add(BatchNormalization())
-
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.2))
-
-model.add(Conv2D(1024, (3, 3), padding = 'same', kernel_initializer="he_normal"))
-model.add(Activation('elu'))
-model.add(BatchNormalization())
-
-model.add(Conv2D(1024, (3, 3), padding = "same", kernel_initializer="he_normal"))
-model.add(Activation('elu'))
-model.add(BatchNormalization())
-
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.2))
-
-model.add(Flatten())
-model.add(Dense(64, kernel_initializer="he_normal"))
-model.add(Activation('elu'))
-model.add(BatchNormalization())
-model.add(Dropout(0.5))
-
-model.add(Dense(64, kernel_initializer="he_normal"))
-model.add(Activation('elu'))
-model.add(BatchNormalization())
-model.add(Dropout(0.5))
-
-model.add(Dense(num_classes, kernel_initializer="he_normal"))
-model.add(Activation("softmax"))
+model.compile(
+    optimizer = Adam(lr=0.0001), 
+    loss='categorical_crossentropy', 
+    metrics=['accuracy'])
 
 print(model.summary())
 
@@ -123,7 +94,7 @@ checkpoint = ModelCheckpoint("emotion_little_vgg.h5",
 
 earlystop = EarlyStopping(monitor = 'val_loss', 
                           min_delta = 0, 
-                          patience = 3,
+                          patience = 6,
                           verbose = 1,
                           restore_best_weights = True)
 
@@ -132,7 +103,7 @@ reduce_lr = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2, patience = 3, 
 callbacks = [earlystop, checkpoint, reduce_lr]
 
 model.compile(loss = 'categorical_crossentropy',
-              optimizer = Adam(learning_rate=0.001),
+              optimizer = Adam(learning_rate=0.0001),
               metrics = ['accuracy'])
 
 nb_train_samples = 28273
