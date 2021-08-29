@@ -18,6 +18,7 @@ img_rows, img_cols = 48, 48
 validation_datagen = ImageDataGenerator(rescale=1./255)
 validation_generator = validation_datagen.flow_from_directory(
     validation_path,
+    color_mode = 'grayscale',
     target_size=(img_rows, img_cols),
     batch_size=batch_size,
     class_mode='categorical',
@@ -29,7 +30,7 @@ classes = list(class_labels.values())
 
 nb_validation_samples = 3534
 
-Y_pred = model.predict_generator(validation_generator, nb_validation_samples // batch_size+1)
+Y_pred = model.predict(validation_generator)
 y_pred = np.argmax(Y_pred, axis=1)
 
 print('Confusion Matrix')
